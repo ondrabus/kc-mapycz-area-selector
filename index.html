@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<script type="text/javascript" src="https://api.mapy.cz/loader.js"></script>
+		<script type="text/javascript">Loader.load();</script>
+		<script src="https://cdn.jsdelivr.net/npm/vue@2.5.17/dist/vue.js"></script>
+		
+		<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.css">
+		<link href="https://fonts.googleapis.com/css?family=Lato" rel="stylesheet">
+		
+		<style type="text/css">
+			html, body
+			{
+				width: 100%;
+				height: 100%;
+				font-family: Lato;
+			}
+			#vueapp, #m
+			{
+				width: 100%;
+				height: 100%;
+			}
+			.status
+			{
+				position: fixed;
+				bottom: 0;
+				height: 200px;
+				width: 100%;
+				background: #fff;
+				z-index: 1;
+				display: flex;
+			}
+			.status > div
+			{
+				display: flex;
+				flex-grow: 1;
+				padding: 20px;
+			}
+		</style>
+	</head>
+	
+	<body>
+		<div id="vueapp">
+			<div id="m" @mousedown="mouseDown"></div>
+			<div class="status">
+				<div>
+					Areas ({{areas.length}}):
+					{{areas}}
+				</div>
+				<div>
+					Current area ({{currentArea.length}}):
+					{{currentArea}}
+				</div>
+			</div>
+		</div>
+		
+		<script type="text/javascript">
+		
+			function isRightButton(e){
+				var isRightMB;
+				e = e || window.event;
+
+				if ("which" in e)  // Gecko (Firefox), WebKit (Safari/Chrome) & Opera
+					isRightMB = e.which == 3; 
+				else if ("button" in e)  // IE, Opera 
+					isRightMB = e.button == 2; 
+
+				return isRightMB;
+			}
+			
+			let data = {
+				map: null,
+				markerLayer: null,
+				areas: [],
+				currentArea: []
+			};
+			
+			const app = new Vue({
+				el: '#vueapp',
+				data: data,
+				methods: {
+					mouseDown: function(e){
+						
+						let isRightButton = window.isRightButton(e);
+						if (window.isRightButton(e))
+						{
+							if (this.currentArea.length > 2)
+							{
+								// store new area
+								this.areas.push(this.currentArea);
+							}
+
+							// clear current
+							this.currentArea = [];							
+						}
+						e.preventDefault();
+					},
+					
+					pushPoint: function(e, elm) {
+						var coords = SMap.Coords.fromEvent(e.data.event, this.map);
+						this.currentArea.push([coords.y, coords.x]);
+						
+						data.markerLayer.addMarker(new SMap.Marker(coords), "Point", {});
+					}
+				},
+				
+				watch: {
+					map: function(){
+						var mouse = new SMap.Control.Mouse(SMap.MOUSE_PAN | SMap.MOUSE_WHEEL | SMap.MOUSE_ZOOM);
+						this.map.addControl(mouse);
+						
+						this.map.getSignals().addListener(window, "map-click", this.pushPoint);
+					},
+					currentArea: function(newVal){
+						
+					}
+				},
+				
+				
+			});
+			
+			var center = SMap.Coords.fromWGS84(14.41790, 50.12655);
+			data.map = new SMap(JAK.gel("m"), center, 13);
+			data.map.addControl(new SMap.Control.Sync());
+			data.map.addDefaultLayer(SMap.DEF_BASE).enable();
+
+			data.markerLayer = new SMap.Layer.Marker();
+			data.map.addLayer(data.markerLayer);
+			data.markerLayer.enable();
+
+		</script>
+	</body>
+	
+</html>
