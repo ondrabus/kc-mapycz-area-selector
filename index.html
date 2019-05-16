@@ -103,6 +103,7 @@
 						this.currentArea.push([coords.y, coords.x]);
 						
 						data.markerLayer.addMarker(new SMap.Marker(coords), "Point", {});
+						data.markerLayer.redraw(false);
 					}
 				},
 				
