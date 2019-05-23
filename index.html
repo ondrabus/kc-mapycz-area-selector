@@ -173,19 +173,10 @@
 						return false;						
 					},
 					
-					isWithinSelf: function(x, y) {
-						var point = turf.point([x, y]);
-						
-						let polygonCoordinates = this.currentArea.map(j => [j[1], j[0]]);
-						polygonCoordinates.push([this.currentArea[0][1], this.currentArea[0][0]]);
-						let polygon = turf.polygon([polygonCoordinates]);
-						return turf.booleanPointInPolygon(point, polygon);
-					},
-					
 					pushPoint: function(e, elm) {
 						var coords = SMap.Coords.fromEvent(e.data.event, this.map);
 						
-						if (this.isWithinDefinedArea(coords.x, coords.y) || (this.currentArea.length > 2 && this.isWithinSelf(coords.x, coords.y)))
+						if (this.isWithinDefinedArea(coords.x, coords.y))
 						{
 							return;
 						}
