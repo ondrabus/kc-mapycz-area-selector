@@ -138,7 +138,6 @@
 					},
 					
 					selectArea: function(i){
-						console.log(i);
 						this.selectedArea = i;
 					},
 					
@@ -167,7 +166,6 @@
 							let polygon = turf.polygon([polygonCoordinates]);
 							if (turf.booleanPointInPolygon(point, polygon))
 							{
-								console.log("selecting area " + i);
 								// selecting area
 								this.selectedArea = i;
 
@@ -208,12 +206,10 @@
 					},
 					
 					redrawAreas: function(){
-						console.log("redrawing areas");
 						data.areasLayer.removeAll();
 						
 						for (var i = 0; i < data.areas.length; i++)
 						{
-							console.log(this.selectedArea == i);
 							let polygon = new SMap.Geometry(SMap.GEOMETRY_POLYGON, null, data.areas[i].area.map(area => SMap.Coords.fromWGS84(area[1], area[0])), { color: (this.selectedArea == i ? "#999" : "#000") });
 							data.areasLayer.addGeometry(polygon);
 						}
@@ -222,7 +218,8 @@
 					},
 					
 					save: function(){
-						CustomElement.setValue(JSON.stringify(this.areas));
+						let data = JSON.stringify(this.areas);
+						CustomElement.setValue(data);
 					}
 				},
 				
@@ -287,7 +284,6 @@
 			CustomElement.init((element, _context) => {
 				if (element.value !== null)
 				{
-					console.log(element.value);
 					data.areas = element.value;
 				}
 			});
