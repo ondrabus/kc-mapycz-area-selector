@@ -6,9 +6,12 @@
 		<script type="text/javascript" src="https://api.mapy.cz/loader.js"></script>
 		<script type="text/javascript">Loader.load();</script>
 		<script src="https://cdn.jsdelivr.net/npm/vue@2.5.17/dist/vue.js"></script>
+		<script src='https://npmcdn.com/@turf/turf/turf.min.js'></script>
 		
 		<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.css">
 		<link href="https://fonts.googleapis.com/css?family=Lato" rel="stylesheet">
+		<link rel="stylesheet" href="https://unpkg.com/purecss@1.0.0/build/pure-min.css" integrity="sha384-nn4HPE8lTHyVtfCBi5yW9d20FjT8BJwUXyWZT9InLYax14RDjBj46LmSztkmNP9w" crossorigin="anonymous">
+		<script src="https://app.kenticocloud.com/js-api/custom-element.js"></script>
 		
 		<style type="text/css">
 			html, body
@@ -30,13 +33,14 @@
 				width: 100%;
 				background: #fff;
 				z-index: 1;
-				display: flex;
-			}
-			.status > div
-			{
-				display: flex;
-				flex-grow: 1;
 				padding: 20px;
+			}
+			
+			.button-error {
+				color: white;
+				border-radius: 4px;
+				text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+				background: rgb(202, 60, 60); /* this is a maroon */
 			}
 		</style>
 	</head>
@@ -44,14 +48,35 @@
 	<body>
 		<div id="vueapp">
 			<div id="m" @mousedown="mouseDown"></div>
-			<div class="status">
-				<div>
-					Areas ({{areas.length}}):
-					{{areas}}
+			<div class="status pure-g">
+				<div class="pure-u-1-6">
+					<ul v-if="areas.length > 0" class="pure-menu-list">
+						<li class="pure-menu-heading">Defined areas</li>
+						<li v-for="(area, index) in areas" class="pure-menu-item"><a href="#" class="pure-menu-link" v-on:click="selectArea(index)">{{(area.name ? area.name : '(unnamed area)')}}</a></li>
+					</ul>
+					<p v-else>
+						No areas defined yet.
+					</p>
+					<a href="#" class="pure-button pure-button-primary" v-on:click="save">Save all</a>
 				</div>
-				<div>
-					Current area ({{currentArea.length}}):
-					{{currentArea}}
+				<div class="pure-u-1-12"></div>
+				<div class="pure-u-17-24">
+					<form class="pure-form pure-form-stacked">
+						<fieldset>
+						    <legend>Selected area</legend>
+								<div class="pure-g">
+									<div class="pure-u-1-2">
+										<label for="name">Name</label>
+										<input id="name" type="text" v-model="currentName" />
+										<label for="code">Code</label>
+										<input id="code" type="text" v-model="currentCode" />
+									</div>
+									<div class="pure-u-1-2" v-if="selectedArea > -1">
+										<a href="#" class="pure-button button-error" v-on:click="deleteSelected">Delete</a>
+										<a href="#" class="pure-button pure-button-secondary" v-on:click="cancelSelection">Cancel</a>
+									</div>
+							</legend>
+					</form>
 				</div>
 			</div>
 		</div>
@@ -73,8 +98,13 @@
 			let data = {
 				map: null,
 				markerLayer: null,
+				geometryLayer: null,
+				areasLayer: null,
 				areas: [],
-				currentArea: []
+				currentArea: [],
+				currentName: null,
+				currentCode: null,
+				selectedArea: -1
 			};
 			
 			const app = new Vue({
@@ -89,21 +119,108 @@
 							if (this.currentArea.length > 2)
 							{
 								// store new area
-								this.areas.push(this.currentArea);
+								this.areas.push({name: this.currentName, code: this.currentCode, area: this.currentArea});
+								this.currentName = null;
+								this.currentCode = null;
+								this.redrawAreas();
 							}
 
 							// clear current
-							this.currentArea = [];							
+							this.currentArea = [];
+							data.markerLayer.removeAll();
+							data.geometryLayer.removeAll();
+							data.markerLayer.redraw(false);
+							data.geometryLayer.redraw(false);
 						}
 						e.preventDefault();
 					},
 					
+					selectArea: function(i){
+						console.log(i);
+						this.selectedArea = i;
+					},
+					
+					deleteSelected: function(){
+						if (confirm('Do you really want to delete ' + this.areas[this.selectedArea].name))
+						{
+							this.areas.splice(this.selectedArea, 1);
+							this.redrawAreas();
+						}
+					},
+					
+					cancelSelection: function(){
+						this.selectedArea = -1;
+						this.currentName = null;
+						this.currentCode = null;
+						this.redrawAreas();
+					},
+					
+					isWithinDefinedArea: function (x, y) {
+						var point = turf.point([x, y]);
+						
+						for (let i = 0; i < this.areas.length; i++)
+						{
+							let polygonCoordinates = this.areas[i].area.map(j => [j[1], j[0]]);
+							polygonCoordinates.push([this.areas[i].area[0][1], this.areas[i].area[0][0]]);
+							let polygon = turf.polygon([polygonCoordinates]);
+							if (turf.booleanPointInPolygon(point, polygon))
+							{
+								console.log("selecting area " + i);
+								// selecting area
+								this.selectedArea = i;
+
+								return true;
+							}
+						}
+						
+						return false;						
+					},
+					
+					isWithinSelf: function(x, y) {
+						var point = turf.point([x, y]);
+						
+						let polygonCoordinates = this.currentArea.map(j => [j[1], j[0]]);
+						polygonCoordinates.push([this.currentArea[0][1], this.currentArea[0][0]]);
+						let polygon = turf.polygon([polygonCoordinates]);
+						return turf.booleanPointInPolygon(point, polygon);
+					},
+					
 					pushPoint: function(e, elm) {
 						var coords = SMap.Coords.fromEvent(e.data.event, this.map);
+						
+						if (this.isWithinDefinedArea(coords.x, coords.y) || (this.currentArea.length > 2 && this.isWithinSelf(coords.x, coords.y)))
+						{
+							return;
+						}
+						
 						this.currentArea.push([coords.y, coords.x]);
 						
+						data.geometryLayer.removeAll();
+						
 						data.markerLayer.addMarker(new SMap.Marker(coords), "Point", {});
+						var polyline = new SMap.Geometry(SMap.GEOMETRY_POLYGON, null, this.currentArea.map(i => SMap.Coords.fromWGS84(i[1], i[0])), { color: "#f00" });
+						data.geometryLayer.addGeometry(polyline);
+						
 						data.markerLayer.redraw(false);
+						data.geometryLayer.redraw(false);
+					},
+					
+					redrawAreas: function(){
+						console.log("redrawing areas");
+						data.areasLayer.removeAll();
+						
+						for (var i = 0; i < data.areas.length; i++)
+						{
+							console.log(this.selectedArea == i);
+							let polygon = new SMap.Geometry(SMap.GEOMETRY_POLYGON, null, data.areas[i].area.map(area => SMap.Coords.fromWGS84(area[1], area[0])), { color: (this.selectedArea == i ? "#999" : "#000") });
+							data.areasLayer.addGeometry(polygon);
+						}
+						
+						data.areasLayer.redraw(false);
+					},
+					
+					save: function(){
+						CustomElement.setValue(this.areas);
 					}
 				},
 				
@@ -114,8 +231,35 @@
 						
 						this.map.getSignals().addListener(window, "map-click", this.pushPoint);
 					},
-					currentArea: function(newVal){
+					selectedArea: function(newVal){
+						if (newVal > -1)
+						{
+							this.currentName = this.areas[newVal].name;
+							this.currentCode = this.areas[newVal].code;
+						}
+						else
+						{
+							this.currentName = null;
+							this.currentCode = null;
+						}
 						
+						this.redrawAreas();
+					},
+					areas: function(newVal, oldVal){
+					},
+					
+					currentName: function(newVal){
+						if (this.selectedArea > -1)
+						{
+							this.areas[this.selectedArea].name = newVal;
+						}
+					},
+					
+					currentCode : function(newVal){
+						if (this.selectedArea > -1)
+						{
+							this.areas[this.selectedArea].code = newVal;
+						}
 					}
 				},
 				
@@ -128,8 +272,20 @@
 			data.map.addDefaultLayer(SMap.DEF_BASE).enable();
 
 			data.markerLayer = new SMap.Layer.Marker();
+			data.geometryLayer = new SMap.Layer.Geometry();
+			data.areasLayer = new SMap.Layer.Geometry();
 			data.map.addLayer(data.markerLayer);
+			data.map.addLayer(data.geometryLayer);
+			data.map.addLayer(data.areasLayer);
 			data.markerLayer.enable();
+			data.geometryLayer.enable();
+			data.areasLayer.enable();
+			
+			CustomElement.setHeight(600);
+			CustomElement.init((element, _context) => {
+				data.areas = element.value;
+			});
+			
 
 		</script>
 	</body>
