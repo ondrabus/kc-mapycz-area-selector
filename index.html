@@ -281,10 +281,8 @@
 			CustomElement.init((element, _context) => {
 				if (element.value !== null)
 				{
-					console.log('setting data');
-					console.log(element.value);
 					data.areas = JSON.parse(element.value);
-					console.log(data.areas);
+					app.redrawAreas();
 				}
 			});
 		</script>
