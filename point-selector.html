@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<script type="text/javascript" src="https://api.mapy.cz/loader.js"></script>
+		<script type="text/javascript">Loader.load();</script>
+		<script src="https://cdn.jsdelivr.net/npm/vue@2.5.17/dist/vue.js"></script>
+		
+		<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.css">
+		<link href="https://fonts.googleapis.com/css?family=Lato" rel="stylesheet">
+		<link rel="stylesheet" href="https://unpkg.com/purecss@1.0.0/build/pure-min.css" integrity="sha384-nn4HPE8lTHyVtfCBi5yW9d20FjT8BJwUXyWZT9InLYax14RDjBj46LmSztkmNP9w" crossorigin="anonymous">
+		<script src="https://app.kenticocloud.com/js-api/custom-element.js"></script>
+		
+		<style type="text/css">
+			html, body
+			{
+				width: 100%;
+				height: 100%;
+				font-family: Lato;
+			}
+			#vueapp, #m
+			{
+				width: 100%;
+				height: 100%;
+			}
+			.status
+			{
+				position: fixed;
+				bottom: 0;
+				height: 200px;
+				width: 100%;
+				background: #fff;
+				z-index: 1;
+				padding: 20px;
+			}
+			
+			.button-error {
+				color: white;
+				border-radius: 4px;
+				text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+				background: rgb(202, 60, 60); /* this is a maroon */
+			}
+		</style>
+	</head>
+	
+	<body>
+		<div id="vueapp">
+			<div id="m"></div>
+		</div>
+		
+		<script type="text/javascript">
+			
+			let data = {
+				map: null,
+				markerLayer: null,
+				currentPoint: null
+			};
+			
+			const app = new Vue({
+				el: '#vueapp',
+				data: data,
+				methods: {
+					pushPoint: function(e, elm) {
+						var coords = SMap.Coords.fromEvent(e.data.event, this.map);
+						this.currentPoint = [coords.y, coords.x];
+					},
+					
+					redrawMap: function(){
+						this.markerLayer.removeAll();
+						this.markerLayer.addMarker(new SMap.Marker(SMap.Coords.fromWGS84(this.currentPoint[1], this.currentPoint[0])));
+						this.markerLayer.redraw(false);
+					},
+					
+					save: function(){
+						console.log(this.currentPoint);
+						let data = JSON.stringify(this.currentPoint);
+						CustomElement.setValue(data);
+					}
+				},
+				
+				watch: {
+					map: function(){
+						var mouse = new SMap.Control.Mouse(SMap.MOUSE_PAN | SMap.MOUSE_WHEEL | SMap.MOUSE_ZOOM);
+						this.map.addControl(mouse);
+						
+						this.map.getSignals().addListener(window, "map-click", this.pushPoint);
+					},
+					currentPoint : function(){
+						this.redrawMap();
+						this.save();
+					}
+				},
+				
+				
+			});
+			
+			var center = SMap.Coords.fromWGS84(16.606710, 49.199002);
+			data.map = new SMap(JAK.gel("m"), center, 13);
+			data.map.addControl(new SMap.Control.Sync());
+			data.map.addDefaultLayer(SMap.DEF_BASE).enable();
+
+			data.markerLayer = new SMap.Layer.Marker();
+			data.map.addLayer(data.markerLayer);
+			data.markerLayer.enable();
+			
+			CustomElement.setHeight(300);
+			CustomElement.init((element, _context) => {
+				if (element.value !== null)
+				{
+					data.currentPoint = JSON.parse(element.value);
+					app.redrawAreas();
+				}
+			});
+		</script>
+	</body>
+	
+</html>
