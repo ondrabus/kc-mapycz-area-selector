@@ -142,12 +142,8 @@
 					},
 					
 					deleteSelected: function(){
-						console.log('attempt to delete');
-						if (confirm('Do you really want to delete ' + this.areas[this.selectedArea].name))
-						{
-							this.areas.splice(this.selectedArea, 1);
-							this.redrawAreas();
-						}
+						this.areas.splice(this.selectedArea, 1);
+						this.redrawAreas();
 					},
 					
 					cancelSelection: function(){
