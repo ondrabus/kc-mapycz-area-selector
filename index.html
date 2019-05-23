@@ -284,6 +284,8 @@
 			CustomElement.init((element, _context) => {
 				if (element.value !== null)
 				{
+					console.log('setting data');
+					console.log(element.value);
 					data.areas = element.value;
 				}
 			});
