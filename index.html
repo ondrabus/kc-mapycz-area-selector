@@ -266,7 +266,7 @@
 				
 			});
 			
-			var center = SMap.Coords.fromWGS84(14.41790, 50.12655);
+			var center = SMap.Coords.fromWGS84(16.606710, 49.199002);
 			data.map = new SMap(JAK.gel("m"), center, 13);
 			data.map.addControl(new SMap.Control.Sync());
 			data.map.addDefaultLayer(SMap.DEF_BASE).enable();
@@ -283,7 +283,10 @@
 			
 			CustomElement.setHeight(600);
 			CustomElement.init((element, _context) => {
-				data.areas = element.value;
+				if (element.value)
+				{
+					data.areas = element.value;
+				}
 			});
 			
 
