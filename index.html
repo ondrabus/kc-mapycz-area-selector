@@ -284,12 +284,13 @@
 			data.areasLayer.enable();
 			
 			CustomElement.setHeight(600);
-			/*CustomElement.init((element, _context) => {
-				if (element.value)
+			CustomElement.init((element, _context) => {
+				if (element.value !== null)
 				{
+					console.log(element.value);
 					data.areas = element.value;
 				}
-			});*/
+			});
 			
 
 		</script>
