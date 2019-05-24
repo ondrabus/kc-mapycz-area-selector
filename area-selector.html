@@ -275,6 +275,17 @@
 					data.areas = JSON.parse(element.value);
 					app.redrawAreas();
 				}
+				if (element.config.outputFormat)
+				{
+					let config = JSON.parse(element.config.outputFormat);
+					if (!config.coords || config.coords.length != 2 || !config.zoom)
+					{
+						console.log("Invalid configuration data");
+						return;
+					}
+					
+					data.map.setCenterZoom(SMap.Coords.fromWGS84(config.coords[1], config.coords[0]), config.zoom, true);
+				}
 			});
 		</script>
 	</body>
