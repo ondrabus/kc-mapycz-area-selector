@@ -270,6 +270,7 @@
 			
 			CustomElement.setHeight(600);
 			CustomElement.init((element, _context) => {
+					console.log(element);
 				if (element.value !== null)
 				{
 					data.areas = JSON.parse(element.value);
