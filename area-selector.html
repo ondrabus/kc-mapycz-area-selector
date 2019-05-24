@@ -275,7 +275,7 @@
 					data.areas = JSON.parse(element.value);
 					app.redrawAreas();
 				}
-				if (element.config.outputFormat)
+				if (element.config && element.config.outputFormat)
 				{
 					let config = JSON.parse(element.config.outputFormat);
 					if (!config.coords || config.coords.length != 2 || !config.zoom)
