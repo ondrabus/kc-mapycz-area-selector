@@ -277,7 +277,7 @@
 				}
 				if (element.config !== null)
 				{
-					if (element.config.coords == null || !Array.isArray(element.config.coords) || config.coords.length != 2 || config.zoom == null)
+					if (element.config.coords == null || !Array.isArray(element.config.coords) || element.config.coords.length != 2 || element.config.zoom == null)
 					{
 						console.log("Invalid configuration data");
 						return;
