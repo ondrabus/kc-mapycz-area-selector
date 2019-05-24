@@ -277,7 +277,9 @@
 				}
 				if (element.config && element.config.outputFormat)
 				{
+					console.log(element.config);
 					let config = JSON.parse(element.config.outputFormat);
+					console.log(config);
 					if (!config.coords || config.coords.length != 2 || !config.zoom)
 					{
 						console.log("Invalid configuration data");
