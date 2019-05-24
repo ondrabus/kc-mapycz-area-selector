@@ -270,18 +270,14 @@
 			
 			CustomElement.setHeight(600);
 			CustomElement.init((element, _context) => {
-					console.log(element);
 				if (element.value !== null)
 				{
 					data.areas = JSON.parse(element.value);
 					app.redrawAreas();
 				}
-				if (element.config && element.config.outputFormat)
+				if (element.config !== null)
 				{
-					console.log(element.config);
-					let config = JSON.parse(element.config.outputFormat);
-					console.log(config);
-					if (!config.coords || config.coords.length != 2 || !config.zoom)
+					if (element.config.coords == null || !Array.isArray(element.config.coords) || config.coords.length != 2 || config.zoom == null)
 					{
 						console.log("Invalid configuration data");
 						return;
